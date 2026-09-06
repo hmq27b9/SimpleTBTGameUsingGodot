@@ -37,7 +37,43 @@ func _process(_delta: float) -> void:
 			position = grid_to_world(grid_position)
 
 			print_terrain_info()
-			
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var cell := world_to_grid(get_global_mouse_position())
+
+			if is_inside_grid(cell):
+				grid_position = cell
+				position = grid_to_world(grid_position)
+
+				print_terrain_info()
+
+
+func grid_to_world(cell: Vector2i) -> Vector2:
+	return Vector2(
+		cell.x * TILE_SIZE + TILE_SIZE / 2.0,
+		cell.y * TILE_SIZE + TILE_SIZE / 2.0
+	)
+
+
+func world_to_grid(pos: Vector2) -> Vector2i:
+	return Vector2i(
+		floor(pos.x / TILE_SIZE),
+		floor(pos.y / TILE_SIZE)
+	)
+
+
+func is_inside_grid(cell: Vector2i) -> bool:
+	return (
+		cell.x >= 0
+		and cell.x < MAP_WIDTH
+		and cell.y >= 0
+		and cell.y < MAP_HEIGHT
+	)
+
+
 func print_terrain_info() -> void:
 	var data: Dictionary = map.get_terrain_data(grid_position)
 
@@ -52,25 +88,11 @@ func print_terrain_info() -> void:
 		data["defense"]
 	)
 
-func grid_to_world(cell: Vector2i) -> Vector2:
-	return Vector2(
-		cell.x * TILE_SIZE + TILE_SIZE / 2.0,
-		cell.y * TILE_SIZE + TILE_SIZE / 2.0
-	)
-
-
-func is_inside_grid(cell: Vector2i) -> bool:
-	return (
-		cell.x >= 0
-		and cell.x < MAP_WIDTH
-		and cell.y >= 0
-		and cell.y < MAP_HEIGHT
-	)
-
 
 func _draw() -> void:
 	var half := TILE_SIZE / 2.0
 
+	# Top-left
 	draw_line(
 		Vector2(-half, -half),
 		Vector2(-half + 12, -half),
@@ -85,6 +107,7 @@ func _draw() -> void:
 		3
 	)
 
+	# Top-right
 	draw_line(
 		Vector2(half, -half),
 		Vector2(half - 12, -half),
@@ -99,6 +122,7 @@ func _draw() -> void:
 		3
 	)
 
+	# Bottom-left
 	draw_line(
 		Vector2(-half, half),
 		Vector2(-half + 12, half),
@@ -113,6 +137,7 @@ func _draw() -> void:
 		3
 	)
 
+	# Bottom-right
 	draw_line(
 		Vector2(half, half),
 		Vector2(half - 12, half),
@@ -126,19 +151,3 @@ func _draw() -> void:
 		Color.WHITE,
 		3
 	)
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			var cell := world_to_grid(get_global_mouse_position())
-
-			if is_inside_grid(cell):
-				grid_position = cell
-				position = grid_to_world(grid_position)
-
-func world_to_grid(pos: Vector2) -> Vector2i:
-	return Vector2i(
-		floor(pos.x / TILE_SIZE),
-		floor(pos.y / TILE_SIZE)
-	)
-				
