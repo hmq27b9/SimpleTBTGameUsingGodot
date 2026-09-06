@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cbt3kf4g3ehmh"]
+
+[ext_resource type="Script" uid="uid://b1bowiq8gvv05" path="res://scences/main.gd" id="1_3if0j"]
+[ext_resource type="Script" uid="uid://ni2rlab8wlq1" path="res://scences/map.gd" id="2_41s58"]
+[ext_resource type="Script" uid="uid://bkvhybl1qc4u6" path="res://scences/grid.gd" id="3_cfdqf"]
+[ext_resource type="Script" uid="uid://b4wq5axa28c8t" path="res://scences/cursor.gd" id="4_nwhyr"]
+
+[node name="Main" type="Node2D" unique_id=1498658141]
+script = ExtResource("1_3if0j")
+
+[node name="Map" type="Node2D" parent="." unique_id=227833188]
+script = ExtResource("2_41s58")
+
+[node name="Grid" type="Node2D" parent="." unique_id=1802836308]
+script = ExtResource("3_cfdqf")
+
+[node name="Cursor" type="Node2D" parent="." unique_id=781215218]
+script = ExtResource("4_nwhyr")
