@@ -7,6 +7,7 @@ const MAP_HEIGHT := 15
 var grid_position := Vector2i(0, 0)
 
 @onready var map = get_parent().get_node("Map")
+@onready var units = get_parent().get_node("Units")
 
 
 func _ready() -> void:
@@ -17,6 +18,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var movement := Vector2i.ZERO
 
+	# Keyboard cursor movement
 	if Input.is_action_just_pressed("ui_right"):
 		movement.x += 1
 
@@ -36,11 +38,22 @@ func _process(_delta: float) -> void:
 			grid_position = new_position
 			position = grid_to_world(grid_position)
 
-			print_terrain_info()
+
+	# Z = Select
+	if Input.is_key_pressed(KEY_Z):
+		select_current_tile()
+
+
+	# X = Cancel
+	if Input.is_key_pressed(KEY_X):
+		cancel_selection()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+
 	if event is InputEventMouseButton:
+		
+		# Left click = Select
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			var cell := world_to_grid(get_global_mouse_position())
 
@@ -48,7 +61,56 @@ func _unhandled_input(event: InputEvent) -> void:
 				grid_position = cell
 				position = grid_to_world(grid_position)
 
-				print_terrain_info()
+				select_current_tile()
+
+
+		# Right click = Cancel
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+			cancel_selection()
+
+
+func select_current_tile() -> void:
+	var unit = get_unit_at(grid_position)
+
+	if unit != null:
+		deselect_all_units()
+		unit.select()
+	else:
+		print_terrain_info()
+
+
+func cancel_selection() -> void:
+	deselect_all_units()
+
+	print("Selection cancelled.")
+
+
+func get_unit_at(cell: Vector2i):
+	for unit in units.get_children():
+		if unit.grid_position == cell:
+			return unit
+
+	return null
+
+
+func deselect_all_units() -> void:
+	for unit in units.get_children():
+		unit.deselect()
+
+
+func print_terrain_info() -> void:
+	var data: Dictionary = map.get_terrain_data(grid_position)
+
+	print(
+		"Tile: ",
+		grid_position,
+		" | Terrain: ",
+		data["name"],
+		" | Movement: ",
+		data["movement_cost"],
+		" | Defense: +",
+		data["defense"]
+	)
 
 
 func grid_to_world(cell: Vector2i) -> Vector2:
@@ -71,21 +133,6 @@ func is_inside_grid(cell: Vector2i) -> bool:
 		and cell.x < MAP_WIDTH
 		and cell.y >= 0
 		and cell.y < MAP_HEIGHT
-	)
-
-
-func print_terrain_info() -> void:
-	var data: Dictionary = map.get_terrain_data(grid_position)
-
-	print(
-		"Tile: ",
-		grid_position,
-		" | Terrain: ",
-		data["name"],
-		" | Movement: ",
-		data["movement_cost"],
-		" | Defense: +",
-		data["defense"]
 	)
 
 

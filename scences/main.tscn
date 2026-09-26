@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://ni2rlab8wlq1" path="res://scences/map.gd" id="2_41s58"]
 [ext_resource type="Script" uid="uid://bkvhybl1qc4u6" path="res://scences/grid.gd" id="3_cfdqf"]
 [ext_resource type="Script" uid="uid://b4wq5axa28c8t" path="res://scences/cursor.gd" id="4_nwhyr"]
+[ext_resource type="PackedScene" uid="uid://us80pjptihv6" path="res://units/unit.tscn" id="5_41s58"]
 
 [node name="Main" type="Node2D" unique_id=1498658141]
 script = ExtResource("1_3if0j")
@@ -16,3 +17,7 @@ script = ExtResource("3_cfdqf")
 
 [node name="Cursor" type="Node2D" parent="." unique_id=781215218]
 script = ExtResource("4_nwhyr")
+
+[node name="Units" type="Node2D" parent="." unique_id=433482389]
+
+[node name="Infantry_1" parent="Units" unique_id=1009215383 instance=ExtResource("5_41s58")]
