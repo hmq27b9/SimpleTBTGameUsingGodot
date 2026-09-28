@@ -40,12 +40,10 @@ func _process(_delta: float) -> void:
 
 
 	# Z = Select
-	if Input.is_key_pressed(KEY_Z):
+	if Input.is_action_just_pressed("select"):
 		select_current_tile()
 
-
-	# X = Cancel
-	if Input.is_key_pressed(KEY_X):
+	if Input.is_action_just_pressed("cancel"):
 		cancel_selection()
 
 
