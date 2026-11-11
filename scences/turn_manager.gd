@@ -14,6 +14,7 @@ var enemy_turn_running: bool = false
 
 @onready var units = get_parent().get_node("Units")
 @onready var movement_range = get_parent().get_node("MovementRange")
+@onready var map = get_parent().get_node("Map")
 
 
 func _ready() -> void:
@@ -35,7 +36,7 @@ func end_player_turn() -> void:
 	print("Enemy turn started.")
 	print("================================")
 
-	# Reset enemy units for their turn.
+	# Reset enemy units.
 	for unit in units.get_children():
 		if unit.team == ENEMY_TEAM:
 			unit.reset_turn()
@@ -49,6 +50,9 @@ func end_player_turn() -> void:
 
 func run_enemy_turn() -> void:
 	for enemy in units.get_children():
+
+		if not is_instance_valid(enemy):
+			continue
 
 		if enemy.team != ENEMY_TEAM:
 			continue
@@ -64,6 +68,18 @@ func run_enemy_turn() -> void:
 
 		print(enemy.unit_name, " is considering its move.")
 
+		# Check whether the player is already in attack range.
+		var distance: int = (
+			abs(target.grid_position.x - enemy.grid_position.x)
+			+ abs(target.grid_position.y - enemy.grid_position.y)
+		)
+
+		if distance <= enemy.attack_range:
+			attack_unit(enemy, target)
+
+			await get_tree().create_timer(0.3).timeout
+			continue
+
 		# Calculate enemy movement range.
 		movement_range.calculate_reachable(
 			enemy.grid_position,
@@ -77,19 +93,31 @@ func run_enemy_turn() -> void:
 			target
 		)
 
-		# Clear movement highlights.
 		movement_range.clear_range()
 
-		# Move only if a better position exists.
+		# Move toward the player.
 		if destination != enemy.grid_position:
 			print(enemy.unit_name, " moving to ", destination)
 
 			await enemy.move_to_cell(destination)
+
+		# Check whether the player is still alive.
+		if not is_instance_valid(target):
+			enemy.has_acted = true
+			continue
+
+		# Check attack range again after moving.
+		distance = (
+			abs(target.grid_position.x - enemy.grid_position.x)
+			+ abs(target.grid_position.y - enemy.grid_position.y)
+		)
+
+		if distance <= enemy.attack_range:
+			attack_unit(enemy, target)
 		else:
 			enemy.has_acted = true
-			print(enemy.unit_name, " cannot move closer.")
+			print(enemy.unit_name, " cannot attack this turn.")
 
-		# Small delay between enemy actions.
 		await get_tree().create_timer(0.3).timeout
 
 
@@ -132,6 +160,34 @@ func find_best_destination(enemy: Node, target: Node) -> Vector2i:
 			best_cell = cell
 
 	return best_cell
+
+
+func attack_unit(attacker: Node, defender: Node) -> void:
+	if not is_instance_valid(defender):
+		return
+
+	var terrain_defense: int = map.get_defense_bonus(
+		defender.grid_position
+	)
+
+	var damage: int = max(
+		1,
+		attacker.attack - defender.defense - terrain_defense
+	)
+
+	print(
+		attacker.unit_name,
+		" attacks ",
+		defender.unit_name,
+		" for ",
+		damage,
+        " damage!"
+	)
+
+	defender.take_damage(damage)
+
+	attacker.has_moved = true
+	attacker.has_acted = true
 
 
 func end_enemy_turn() -> void:
