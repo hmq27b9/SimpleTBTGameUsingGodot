@@ -18,19 +18,23 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var movement := Vector2i.ZERO
 
-	# Keyboard cursor movement
-	if Input.is_action_just_pressed("ui_right"):
+	# Right
+	if Input.is_action_just_pressed("ui_right") or Input.is_action_just_pressed("move_right"):
 		movement.x += 1
 
-	if Input.is_action_just_pressed("ui_left"):
+	# Left
+	if Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("move_left"):
 		movement.x -= 1
 
-	if Input.is_action_just_pressed("ui_down"):
+	# Down
+	if Input.is_action_just_pressed("ui_down") or Input.is_action_just_pressed("move_down"):
 		movement.y += 1
 
-	if Input.is_action_just_pressed("ui_up"):
+	# Up
+	if Input.is_action_just_pressed("ui_up") or Input.is_action_just_pressed("move_up"):
 		movement.y -= 1
 
+	# Move cursor
 	if movement != Vector2i.ZERO:
 		var new_position := grid_position + movement
 
@@ -38,32 +42,29 @@ func _process(_delta: float) -> void:
 			grid_position = new_position
 			position = grid_to_world(grid_position)
 
-
-	# Z = Select
+	# Select with Z
 	if Input.is_action_just_pressed("select"):
 		select_current_tile()
 
+	# Cancel with X
 	if Input.is_action_just_pressed("cancel"):
 		cancel_selection()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
 
-	if event is InputEventMouseButton:
-		
-		# Left click = Select
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# Left mouse button: Select
+		if event.button_index == MOUSE_BUTTON_LEFT:
 			var cell := world_to_grid(get_global_mouse_position())
 
 			if is_inside_grid(cell):
 				grid_position = cell
 				position = grid_to_world(grid_position)
-
 				select_current_tile()
 
-
-		# Right click = Cancel
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		# Right mouse button: Cancel
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			cancel_selection()
 
 
@@ -79,7 +80,6 @@ func select_current_tile() -> void:
 
 func cancel_selection() -> void:
 	deselect_all_units()
-
 	print("Selection cancelled.")
 
 
@@ -136,63 +136,52 @@ func is_inside_grid(cell: Vector2i) -> bool:
 
 func _draw() -> void:
 	var half := TILE_SIZE / 2.0
+	var corner := 12.0
 
 	# Top-left
 	draw_line(
 		Vector2(-half, -half),
-		Vector2(-half + 12, -half),
-		Color.WHITE,
-		3
+		Vector2(-half + corner, -half),
+		Color.WHITE, 3
 	)
-
 	draw_line(
 		Vector2(-half, -half),
-		Vector2(-half, -half + 12),
-		Color.WHITE,
-		3
+		Vector2(-half, -half + corner),
+		Color.WHITE, 3
 	)
 
 	# Top-right
 	draw_line(
 		Vector2(half, -half),
-		Vector2(half - 12, -half),
-		Color.WHITE,
-		3
+		Vector2(half - corner, -half),
+		Color.WHITE, 3
 	)
-
 	draw_line(
 		Vector2(half, -half),
-		Vector2(half, -half + 12),
-		Color.WHITE,
-		3
+		Vector2(half, -half + corner),
+		Color.WHITE, 3
 	)
 
 	# Bottom-left
 	draw_line(
 		Vector2(-half, half),
-		Vector2(-half + 12, half),
-		Color.WHITE,
-		3
+		Vector2(-half + corner, half),
+		Color.WHITE, 3
 	)
-
 	draw_line(
 		Vector2(-half, half),
-		Vector2(-half, half - 12),
-		Color.WHITE,
-		3
+		Vector2(-half, half - corner),
+		Color.WHITE, 3
 	)
 
 	# Bottom-right
 	draw_line(
 		Vector2(half, half),
-		Vector2(half - 12, half),
-		Color.WHITE,
-		3
+		Vector2(half - corner, half),
+		Color.WHITE, 3
 	)
-
 	draw_line(
 		Vector2(half, half),
-		Vector2(half, half - 12),
-		Color.WHITE,
-		3
+		Vector2(half, half - corner),
+		Color.WHITE, 3
 	)
