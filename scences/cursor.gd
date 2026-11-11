@@ -1,3 +1,4 @@
+
 extends Node2D
 
 const TILE_SIZE := 48
@@ -5,9 +6,11 @@ const MAP_WIDTH := 20
 const MAP_HEIGHT := 15
 
 var grid_position := Vector2i(0, 0)
+var selected_unit = null
 
 @onready var map = get_parent().get_node("Map")
 @onready var units = get_parent().get_node("Units")
+@onready var movement_range = get_parent().get_node("MovementRange")
 
 
 func _ready() -> void:
@@ -42,11 +45,11 @@ func _process(_delta: float) -> void:
 			grid_position = new_position
 			position = grid_to_world(grid_position)
 
-	# Select with Z
+	# Select
 	if Input.is_action_just_pressed("select"):
 		select_current_tile()
 
-	# Cancel with X
+	# Cancel
 	if Input.is_action_just_pressed("cancel"):
 		cancel_selection()
 
@@ -54,7 +57,7 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 
-		# Left mouse button: Select
+		# Left click
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			var cell := world_to_grid(get_global_mouse_position())
 
@@ -63,23 +66,59 @@ func _unhandled_input(event: InputEvent) -> void:
 				position = grid_to_world(grid_position)
 				select_current_tile()
 
-		# Right mouse button: Cancel
+		# Right click
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			cancel_selection()
 
 
 func select_current_tile() -> void:
+
+	# A unit is already selected: attempt to move it.
+	if selected_unit != null:
+
+		if grid_position == selected_unit.grid_position:
+			return
+
+		if movement_range.is_reachable(grid_position):
+			var destination := grid_position
+
+			selected_unit.setup(destination)
+			print(selected_unit.unit_name, " moved to ", destination)
+
+			selected_unit.deselect()
+			selected_unit = null
+
+			movement_range.clear_range()
+			return
+
+		print("Destination is not reachable.")
+		return
+
+	# No unit selected: check the current tile.
 	var unit = get_unit_at(grid_position)
 
 	if unit != null:
 		deselect_all_units()
-		unit.select()
+
+		selected_unit = unit
+		selected_unit.select()
+
+		movement_range.calculate_reachable(
+			unit.grid_position,
+			unit.movement,
+			unit
+		)
+
 	else:
 		print_terrain_info()
 
 
 func cancel_selection() -> void:
 	deselect_all_units()
+
+	selected_unit = null
+	movement_range.clear_range()
+
 	print("Selection cancelled.")
 
 
@@ -139,49 +178,17 @@ func _draw() -> void:
 	var corner := 12.0
 
 	# Top-left
-	draw_line(
-		Vector2(-half, -half),
-		Vector2(-half + corner, -half),
-		Color.WHITE, 3
-	)
-	draw_line(
-		Vector2(-half, -half),
-		Vector2(-half, -half + corner),
-		Color.WHITE, 3
-	)
+	draw_line(Vector2(-half, -half), Vector2(-half + corner, -half), Color.WHITE, 3)
+	draw_line(Vector2(-half, -half), Vector2(-half, -half + corner), Color.WHITE, 3)
 
 	# Top-right
-	draw_line(
-		Vector2(half, -half),
-		Vector2(half - corner, -half),
-		Color.WHITE, 3
-	)
-	draw_line(
-		Vector2(half, -half),
-		Vector2(half, -half + corner),
-		Color.WHITE, 3
-	)
+	draw_line(Vector2(half, -half), Vector2(half - corner, -half), Color.WHITE, 3)
+	draw_line(Vector2(half, -half), Vector2(half, -half + corner), Color.WHITE, 3)
 
 	# Bottom-left
-	draw_line(
-		Vector2(-half, half),
-		Vector2(-half + corner, half),
-		Color.WHITE, 3
-	)
-	draw_line(
-		Vector2(-half, half),
-		Vector2(-half, half - corner),
-		Color.WHITE, 3
-	)
+	draw_line(Vector2(-half, half), Vector2(-half + corner, half), Color.WHITE, 3)
+	draw_line(Vector2(-half, half), Vector2(-half, half - corner), Color.WHITE, 3)
 
 	# Bottom-right
-	draw_line(
-		Vector2(half, half),
-		Vector2(half - corner, half),
-		Color.WHITE, 3
-	)
-	draw_line(
-		Vector2(half, half),
-		Vector2(half, half - corner),
-		Color.WHITE, 3
-	)
+	draw_line(Vector2(half, half), Vector2(half - corner, half), Color.WHITE, 3)
+	draw_line(Vector2(half, half), Vector2(half, half - corner), Color.WHITE, 3)

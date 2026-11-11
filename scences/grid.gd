@@ -11,10 +11,10 @@ func grid_to_world(cell: Vector2i) -> Vector2:
 	)
 
 
-func world_to_grid(position: Vector2) -> Vector2i:
+func world_to_grid(world_position: Vector2) -> Vector2i:
 	return Vector2i(
-		floor(position.x / TILE_SIZE),
-		floor(position.y / TILE_SIZE)
+		floor(world_position.x / TILE_SIZE),
+		floor(world_position.y / TILE_SIZE)
 	)
 
 
