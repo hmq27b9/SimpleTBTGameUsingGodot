@@ -7,10 +7,12 @@ const MAP_HEIGHT := 15
 
 var grid_position := Vector2i(0, 0)
 var selected_unit = null
+var command_locked := false
 
 @onready var map = get_parent().get_node("Map")
 @onready var units = get_parent().get_node("Units")
 @onready var movement_range = get_parent().get_node("MovementRange")
+@onready var turn_manager = get_parent().get_node("TurnManager")
 
 
 func _ready() -> void:
@@ -19,6 +21,9 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if command_locked or not turn_manager.is_player_turn():
+		return
+
 	var movement := Vector2i.ZERO
 
 	# Right
@@ -39,25 +44,34 @@ func _process(_delta: float) -> void:
 
 	# Move cursor
 	if movement != Vector2i.ZERO:
-		var new_position := grid_position + movement
+		var new_position: Vector2i = grid_position + movement
 
 		if is_inside_grid(new_position):
 			grid_position = new_position
 			position = grid_to_world(grid_position)
 
-	# Select
+	# End player turn with Enter
+	if Input.is_action_just_pressed("end_turn"):
+		cancel_selection()
+		turn_manager.end_player_turn()
+		return
+
+	# Select with Z
 	if Input.is_action_just_pressed("select"):
 		select_current_tile()
 
-	# Cancel
+	# Cancel with X
 	if Input.is_action_just_pressed("cancel"):
 		cancel_selection()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if command_locked or not turn_manager.is_player_turn():
+		return
+
 	if event is InputEventMouseButton and event.pressed:
 
-		# Left click
+		# Left mouse button: Select
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			var cell := world_to_grid(get_global_mouse_position())
 
@@ -66,12 +80,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				position = grid_to_world(grid_position)
 				select_current_tile()
 
-		# Right click
+		# Right mouse button: Cancel
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			cancel_selection()
 
 
 func select_current_tile() -> void:
+	if command_locked or not turn_manager.is_player_turn():
+		return
 
 	# A unit is already selected: attempt to move it.
 	if selected_unit != null:
@@ -80,15 +96,22 @@ func select_current_tile() -> void:
 			return
 
 		if movement_range.is_reachable(grid_position):
-			var destination := grid_position
+			var destination: Vector2i = grid_position
+			var moving_unit = selected_unit
 
-			selected_unit.setup(destination)
-			print(selected_unit.unit_name, " moved to ", destination)
+			command_locked = true
+			movement_range.clear_range()
 
-			selected_unit.deselect()
+			print(moving_unit.unit_name, " moving to ", destination)
+
+			await moving_unit.move_to_cell(destination)
+
+			moving_unit.deselect()
 			selected_unit = null
 
-			movement_range.clear_range()
+			print(moving_unit.unit_name, " has finished moving.")
+
+			command_locked = false
 			return
 
 		print("Destination is not reachable.")
@@ -98,10 +121,19 @@ func select_current_tile() -> void:
 	var unit = get_unit_at(grid_position)
 
 	if unit != null:
+
+		if unit.team != 0:
+			print("You cannot control enemy units.")
+			return
+
+		if unit.has_acted:
+			print(unit.unit_name, " has already acted this turn.")
+			return
+
 		deselect_all_units()
 
 		selected_unit = unit
-		selected_unit.select()
+		unit.select()
 
 		movement_range.calculate_reachable(
 			unit.grid_position,
@@ -114,6 +146,9 @@ func select_current_tile() -> void:
 
 
 func cancel_selection() -> void:
+	if command_locked:
+		return
+
 	deselect_all_units()
 
 	selected_unit = null
@@ -157,10 +192,10 @@ func grid_to_world(cell: Vector2i) -> Vector2:
 	)
 
 
-func world_to_grid(pos: Vector2) -> Vector2i:
+func world_to_grid(world_position: Vector2) -> Vector2i:
 	return Vector2i(
-		floor(pos.x / TILE_SIZE),
-		floor(pos.y / TILE_SIZE)
+		floor(world_position.x / TILE_SIZE),
+		floor(world_position.y / TILE_SIZE)
 	)
 
 

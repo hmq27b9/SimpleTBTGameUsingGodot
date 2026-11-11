@@ -2,27 +2,24 @@ extends Node2D
 
 const TILE_SIZE := 48
 
-
 enum Team {
 	PLAYER,
 	ENEMY
 }
 
-
 @export var unit_name := "Infantry"
-
 @export var max_hp := 10
-var hp := 10
-
 @export var movement := 3
 @export var attack := 5
 @export var defense := 1
-
 @export var team: Team = Team.PLAYER
 
-
+var hp := 10
 var grid_position := Vector2i.ZERO
+
 var selected := false
+var has_acted := false
+var is_moving := false
 
 
 func _ready() -> void:
@@ -32,7 +29,6 @@ func _ready() -> void:
 
 func setup(cell: Vector2i) -> void:
 	grid_position = cell
-
 	position = Vector2(
 		cell.x * TILE_SIZE + TILE_SIZE / 2.0,
 		cell.y * TILE_SIZE + TILE_SIZE / 2.0
@@ -40,6 +36,9 @@ func setup(cell: Vector2i) -> void:
 
 
 func select() -> void:
+	if has_acted or is_moving:
+		return
+
 	selected = true
 	queue_redraw()
 
@@ -63,20 +62,43 @@ func deselect() -> void:
 	queue_redraw()
 
 
+func move_to_cell(cell: Vector2i) -> void:
+	if is_moving or has_acted:
+		return
+
+	is_moving = true
+	grid_position = cell
+
+	var target_position := Vector2(
+		cell.x * TILE_SIZE + TILE_SIZE / 2.0,
+		cell.y * TILE_SIZE + TILE_SIZE / 2.0
+	)
+
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(self, "position", target_position, 0.25)
+
+	await tween.finished
+
+	is_moving = false
+	has_acted = true
+
+
+func reset_turn() -> void:
+	has_acted = false
+	selected = false
+	queue_redraw()
+
+
 func _draw() -> void:
-	# Unit body
 	var body_color := Color(0.2, 0.4, 0.9)
 
 	if team == Team.ENEMY:
 		body_color = Color(0.9, 0.2, 0.2)
 
-	draw_circle(
-		Vector2.ZERO,
-		16,
-		body_color
-	)
+	draw_circle(Vector2.ZERO, 16, body_color)
 
-	# Unit border
 	draw_arc(
 		Vector2.ZERO,
 		16,
@@ -87,7 +109,6 @@ func _draw() -> void:
 		2
 	)
 
-	# Selection ring
 	if selected:
 		draw_arc(
 			Vector2.ZERO,
@@ -97,4 +118,15 @@ func _draw() -> void:
 			32,
 			Color.YELLOW,
 			3
+		)
+
+	if has_acted:
+		draw_arc(
+			Vector2.ZERO,
+			20,
+			0,
+			TAU,
+			32,
+			Color(0.5, 0.5, 0.5),
+			2
 		)

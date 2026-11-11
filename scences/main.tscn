@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://b4wq5axa28c8t" path="res://scences/cursor.gd" id="4_nwhyr"]
 [ext_resource type="PackedScene" uid="uid://us80pjptihv6" path="res://units/unit.tscn" id="5_41s58"]
 [ext_resource type="Script" uid="uid://dqutr4geu27w3" path="res://scences/movement_range.gd" id="6_cfdqf"]
+[ext_resource type="Script" uid="uid://med4fkw6tpfc" path="res://scences/turn_manager.gd" id="7_nwhyr"]
 
 [node name="Main" type="Node2D" unique_id=1498658141]
 script = ExtResource("1_3if0j")
@@ -23,5 +24,11 @@ script = ExtResource("4_nwhyr")
 
 [node name="Infantry_1" parent="Units" unique_id=1009215383 instance=ExtResource("5_41s58")]
 
+[node name="Enemy_Infantry_1" parent="Units" unique_id=656521111 instance=ExtResource("5_41s58")]
+team = 1
+
 [node name="MovementRange" type="Node2D" parent="." unique_id=2060346302]
 script = ExtResource("6_cfdqf")
+
+[node name="TurnManager" type="Node2D" parent="." unique_id=2130483919]
+script = ExtResource("7_nwhyr")
